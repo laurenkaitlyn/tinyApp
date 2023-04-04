@@ -43,6 +43,12 @@ app.post("/urls/:id", (req, res) => {
   res.redirect('/urls');
 })
 
+//delete a url
+app.post("/urls/:id/delete", (req, res) => {
+  delete urlDatabase[req.params.shortURL];
+  res.redirect("/urls");
+})
+
 // app.get("/", (req, res) => {
 //   res.send("Hello!");
 // });
