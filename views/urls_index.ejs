@@ -31,10 +31,11 @@
           <% for (let id in urls) { %>
             <tr>
               <td><%= id %></td>
-              <td><%= urls[id].longURL %></td>
+              <td><%= urls[id] %></td>
+              </td>
               <td>
-                <form method="POST" action=""/urls/<%= id %> delete">
-                  <button type="submit">delete</button>
+                <form method="POST" action="/urls/<%= id %>/delete">
+                  <button type="submit">Delete</button>
                 </form>
               </td>
             </tr>
