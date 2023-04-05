@@ -25,6 +25,7 @@ const urlDatabase = {
   "9sm5xK":  "http://www.google.com"
 };
 
+//-------------POST-------------
 
 //
 app.post("/urls", (req, res) => {
@@ -55,6 +56,20 @@ app.post("/urls/:id/edit", (req, res) => {
   res.redirect("/urls");
 })
 
+//Login
+app.post("/login", (req,res) => {
+  console.log('req.body', req.body);
+  const username = req.body.username;
+  
+  //if left balnk
+  if (!username) {
+    return res.status(400).send("username cannot be blank");
+  }
+
+  res.cookie('username', username);
+  res.redirect('/urls');
+})
+
 // app.get("/", (req, res) => {
 //   res.send("Hello!");
 // });
@@ -66,6 +81,8 @@ app.post("/urls/:id/edit", (req, res) => {
 // app.get("/hello", (req, res) => {
 //   res.send("<html><body>Hello <b>World</b></body></html>\n");
 // });
+
+//-------------------GET-------------------
 
 //main page
 app.get("/urls", (req, res) => {
