@@ -1,13 +1,15 @@
 //express
+const cookieParser = require("cookie-parser");
 const express = require("express");
-const app = express();
 
 //port
 const PORT = 8080;
-
-app.set("view engine", "ejs");
+const app = express();
 
 app.use(express.urlencoded({extended: true }));
+app.use(cookieParser());
+
+app.set("view engine", "ejs");
 
 //helper
 const generateRandomString = () => {
@@ -86,14 +88,19 @@ app.post("/login", (req,res) => {
 
 //main page
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { 
+    urls: urlDatabase, 
+    username: req.cookies["username"]};
+    
   res.render("urls_index", templateVars);
 });
 
+//new url page
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+//show new id
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_shows", templateVars);
@@ -104,6 +111,8 @@ app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
 })
+
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
