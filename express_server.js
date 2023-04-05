@@ -40,11 +40,18 @@ app.post("/urls/:id", (req, res) => {
   let longURL = req.body.longURL;
   urlDatabase[req.params.id] = longURL;
   res.redirect('/urls');
-})
+});
 
 //delete a url
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
+  res.redirect("/urls");
+});
+
+//edit
+app.post("/urls/:id/edit", (req, res) => {
+  let longURL = req.body.longURL;
+  urlDatabase[req.params.id] = longURL
   res.redirect("/urls");
 })
 
