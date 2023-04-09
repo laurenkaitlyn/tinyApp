@@ -68,7 +68,9 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = { 
     urls: urlDatabase, 
-    user: users[req.cookies["user_id"]]};
+    user: users[req.cookies["user_id"]]
+  };
+
 
   res.render("urls_index", templateVars);
 });
@@ -78,6 +80,12 @@ app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: users[req.cookies["user_id"]]
   }
+
+  //if user is not logged in
+  if (!templateVars.user) {
+    res.redirect("/login");
+  }
+
   res.render("urls_new", templateVars);
 });
 
@@ -93,21 +101,39 @@ app.get("/urls/:id", (req, res) => {
 //redirect to url
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
+  const { id } = req.params;
+  const selectedUrl = urlDatabase[id]
+
+  //if user tries to access a shortened url that DNE
+  if (!selectedUrl) {
+    return res.status(404).send("Shortened URL not found :(");
+  };
+
   res.redirect(longURL);
 })
 
 //registration page
 app.get("/register", (req, res) => {
   const templateVars = {
-    user: undefined
+    user: users[req.cookies["user_id"]],
   };
+
+  //if user is already logged in
+  if (templateVars.user) {
+    res.redirect("/urls");
+  }
   res.render("urls_registration", templateVars);
 });
 
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: undefined
+    user: users[req.cookies["user_id"]],
   };
+
+  //if user is already logged in
+  if (templateVars.user) {
+    res.redirect("/urls");
+  }
   res.render("urls_login", templateVars);
 })
 
@@ -141,6 +167,11 @@ app.post('/register', (req, res) => {
 //
 app.post("/urls", (req, res) => {
   console.log(req.body); //log the POST request body to the console
+  const user = users[req.cookies["user_id"]];
+  //is user hasn't logged in
+  if (!user) {
+    res.status(401).send("You must login to shorten a URL")
+  }
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = longURL;
