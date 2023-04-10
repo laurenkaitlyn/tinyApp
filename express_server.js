@@ -2,26 +2,8 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const cookieSession = require('cookie-session');
+const { userLookup, generateRandomString, urlsForUser } = require("./helpers");
 
-//helper for short url
-const generateRandomString = () => {
-  let result = '';
-  const char = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < 6; i++) {
-    result += char.charAt(Math.floor(Math.random() * char.length));
-  }
-  return result;
-}
-
-//user lookup helper function 
-const userLookup = (email, database) => {
-  for (let userID in users) {
-    if (users[userID].email === email) {
-      return userID;
-    }
-  }
-  return;
-}
 
 //data store for users
 const users = {
@@ -50,18 +32,6 @@ const urlDatabase = {
   },
 }
 
-//returns the URLs where the userID is equal to the id of the currently logged-in user
-const urlsForUser= function (id, database) {
-  const userUrls = {};
-
-  for (let shortURL in database) {
-    if (database[shortURL].userID === id) {
-      userUrls[shortURL] = database[shortURL];
-    }
-  }
-  return userUrls;
-}
-
 //------------Set Up/ Middlewear-----------
 const PORT = 8080;
 const app = express();
@@ -75,9 +45,6 @@ app.use(cookieSession({
 );
 
 app.set("view engine", "ejs");
-
-
-
 
 
 //=====================GET============================
@@ -107,7 +74,7 @@ app.get("/urls", (req, res) => {
 
 //new url page - redirects if user is not logged in
 app.get("/urls/new", (req, res) => {
-  if (!templateVars.user) {
+  if (!req.session.userID) {
     res.redirect("/login");
   };
 
@@ -131,6 +98,8 @@ app.get("/urls/:id", (req, res) => {
     return res.status(403).send("You cannot edit this!");
   }
 
+  const longURL = urlDatabase[id].longURL;
+
   const templateVars = {
     longURL: longURL,
     id: id,
@@ -139,13 +108,12 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_shows", templateVars);
 });
 
-//redirects to url
+//redirects to url - sends error if user tries to access an id that DNE
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id].longURL;
-  const { id } = req.params;
+  const id = req.params.id;
+  const longURL = urlDatabase[id].longURL;
   const selectedUrl = urlDatabase[id]
 
-  //if user tries to access a shortened url that DNE
   if (!selectedUrl) {
     return res.status(404).send("Shortened URL not found :(");
   };
@@ -169,8 +137,8 @@ app.get("/register", (req, res) => {
 // login page - redirects if user is already logged in
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: users[req.session.userID],
     userID: null,
+    user: users[req.session.userID],
   };
 
   if (templateVars.user) {
@@ -182,33 +150,6 @@ app.get("/login", (req, res) => {
 
 
 //===========================POST============================
-
-//register new uses - checks if they filled in fields correctly, if we have an account with that email already, and hashes the password set up
-app.post('/register', (req, res) => {
-
-  const { email, password } = req.body;
-  //if user does not input email or password
-  if (!email|| !password) {
-    return res.status(400).send("An email or password needs to be entered.") 
-  } 
-  
-  if (userLookup(email, users)) {
-    return res.status(400).send("Email is already in use.")
-  }
-
-  const ID = generateRandomString();
-  const hashedPassword = bcrypt.hashSync(req.body.password, 10);
-
-  users[ID] = {
-    id: ID,
-    email: req.body.email,
-    password: hashedPassword,
-  };
-
-  req.session.userID = ID;
-  res.redirect("/urls")
-
-});
 
 // adds new shortened url - redirects user to login if they aren't
 app.post("/urls", (req, res) => {
@@ -239,13 +180,13 @@ res.redirect("/urls");
 
 //delete a url - only if it belongs to the user
 app.post("/urls/:id/delete", (req, res) => {
-  const { id } = req.params;
+  const id = req.params.id;
 
   if (req.session.userID === urlDatabase[id].userID) {
     delete urlDatabase[id];
     res.redirect("/urls");
   } else {
-    return res.status(400).send("Unauthorized request");
+    return res.status(400).send("You are not authorized to delete this url!");
   }
 });
 
@@ -278,8 +219,37 @@ app.post('/logout', (req, res) => {
   res.redirect('/login');
 });
 
+//register new uses - checks if they filled in fields correctly, if we have an account with that email already, and hashes the password set up
+app.post('/register', (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
 
-//======================== Port Listener ======================
+  //if user does not input email or password
+  if (!email|| !password) {
+    return res.status(400).send("An email or password needs to be entered.") 
+  } 
+  userID = userLookup(email, password);
+
+  if (userID) {
+    return res.status(400).send("Email is already in use.")
+  }
+
+  const ID = generateRandomString();
+  const hashedPassword = bcrypt.hashSync(req.body.password, 10);
+
+  users[ID] = {
+    id: ID,
+    email: req.body.email,
+    password: hashedPassword,
+  };
+
+  req.session.userID = ID;
+  res.redirect("/urls")
+
+});
+
+
+//======================== Listener ======================
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
