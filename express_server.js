@@ -10,12 +10,7 @@ const users = {
   user1: {
     id: "user1",
     email: "lauren@example.com",
-    password: "1234",
-  },
-  user2: {
-    id: "user2",
-    email: "will@example.com",
-    password: "3142"
+    password: "$2b$10$0J4eqL5cPAoGOZGI/VnSo./dw7PDAxOtG31SSWKn7s3M7YVTMXvaC", //123
   },
 };
 
@@ -28,7 +23,7 @@ const urlDatabase = {
 
   "9sm5xK":  {
     longURL: "http://www.google.com",
-    userID: "user2",
+    userID: "user1",
   },
 }
 
@@ -215,7 +210,7 @@ app.post("/login", (req, res) => {
 
 //logout user - deletes thier cookies
 app.post('/logout', (req, res) => {
-  res.session = null;
+  req.session = null;
   res.redirect('/login');
 });
 
