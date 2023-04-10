@@ -22,11 +22,10 @@
         </p>
       </div>
       <div class="card-footer text-muted"></div>
-      <form action = ' /urls/<%= id %>' method = "POST">
-        <h3> Edit </h3>
+      <form class="form-inline justify-content-center" action = ' /urls/<%= id %>/edit' method = "POST">
         <label form ="name"> New URL : </label>
-        <input type="text" name="longURL" id="longURL" placeholder="<% longURL %>">
-        <button type="submit">Submit</button>
+        <input class="form-control" type="text" name="longURL" id="longURL" placeholder="<% longURL %>">
+        <button type="submit" class=" btn-info ">Edit</button>
       </form>
       </form>
     </div>

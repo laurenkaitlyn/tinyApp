@@ -21,8 +21,11 @@
     <body>
       <div class="navbar-nav">
         <% if (user) { %>
-          <form class="form-inline" style="color:white" action="/logout" method="POST">
-            Logged In As: <%= user.email %> <button type="submit" class="Logout">Logout</button>
+          <form class="form-inline" action="/logout" method="POST" name="userID">
+            <label for="userID" style="margin-right: 10px; color:white">
+              Logged In As: <%= user.email %>
+            </label>
+            <button type="submit" class="Logout">Logout</button>
           </form>
           <% } else { %>
             <div>
