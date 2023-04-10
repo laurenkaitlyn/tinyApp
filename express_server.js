@@ -33,9 +33,28 @@ const users = {
 
 //database 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK":  "http://www.google.com"
-};
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "user1",
+  },
+
+  "9sm5xK":  {
+    longURL: "http://www.google.com",
+    userID: "user2",
+  },
+}
+
+//returns the URLs where the userID is equal to the id of the currently logged-in user
+const urlsForUser= function (id, database) {
+  const userUrls = {};
+
+  for (let shortURL in database) {
+    if (database[shortURL].userID === id) {
+      userUrls[shortURL] = database[shortURL];
+    }
+  }
+  return userUrls;
+}
 
 //------------Set Up/ Middlewear-----------
 const PORT = 8080;
@@ -67,11 +86,10 @@ app.get("/hello", (req, res) => {
 //main page
 app.get("/urls", (req, res) => {
   const templateVars = { 
-    urls: urlDatabase, 
+    urls: urlsForUser(req.cookies["user_id"], urlDatabase), 
     user: users[req.cookies["user_id"]]
   };
-
-
+  
   res.render("urls_index", templateVars);
 });
 
@@ -91,16 +109,36 @@ app.get("/urls/new", (req, res) => {
 
 //show new id
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id,
-    longURL: urlDatabase[req.params.id],
-    user: users[req.cookies["user_id"]]
-  };
-  res.render("urls_shows", templateVars);
+  let longURL = urlDatabase[req.params.id].longURL;
+  let currentUser = users[req.cookies["user_id"]];
+  let display;
+
+  if (currentUser) {
+    if (urlsForUser(urlDatabase, currentUser.id)[req.params.id]) {
+      display = true; 
+    } else {
+      display = false; 
+    }
+    //determine if we can show page or not
+    if (longURL) {
+      const templateVars = {
+        user: currentUser,
+        id: req.params.id,
+        longURL: longURL,
+        display
+      };
+      res.render("urls_shows", templateVars);
+    } else {
+      res.send("URL does not exist.");
+    }
+  } else {
+    res.status(403).redirect("/login");
+  }
 });
 
 //redirect to url
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
+  const longURL = urlDatabase[req.params.id].longURL;
   const { id } = req.params;
   const selectedUrl = urlDatabase[id]
 
@@ -172,31 +210,38 @@ app.post("/urls", (req, res) => {
   if (!user) {
     res.status(401).send("You must login to shorten a URL")
   }
-  const longURL = req.body.longURL;
+  
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL] = {
+    longURL: req.body.longURL,
+    userID: users[req.cookies["user_id"]],
+  };
   res.redirect(`/urls/${shortURL}`);
 });
 
-//adding new url
+//editing
 app.post("/urls/:id", (req, res) => {
-  let longURL = req.body.longURL;
-  urlDatabase[req.params.id] = longURL;
-  res.redirect('/urls');
+  if (urlDatabase[req.params.id].userID === req.cookies["user_id"]){
+    let longURL = req.body.longURL;
+    urlDatabase[req.params.id] = longURL
+    res.redirect("/urls");
+  } else {
+    res.status(403).send("You don't have the right permissions");
+  }
 });
 
 //delete a url
-app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL];
+app.post("/urls/:id/delete", (req, res) => {
+  const { id } = req.params;
+  const userID = req.cookies["user_id"];
+  if (userID) {
+    delete urlDatabase[id];
+  } else {
+    res.send("Unauthorized request");
+  }
   res.redirect("/urls");
 });
 
-//edit
-app.post("/urls/:id/edit", (req, res) => {
-  let longURL = req.body.longURL;
-  urlDatabase[req.params.id] = longURL
-  res.redirect("/urls");
-});
 
 //Login
 app.post("/login", (req, res) => {
