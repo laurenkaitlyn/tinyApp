@@ -12,17 +12,17 @@
   </head>
   <body>
     <%- include('partials/_header') %>
-    <main>
+    <main style="margin: 1em;">
       <h3> Login As An Existing User </h3>
-      <form action "/login" method="POST">
-        <div> 
-          <label for="email"> Email </label>
-          <input type="email" name="email" id="email">
+      <form action="/login" method="POST">
+        <div class="form-group mb-2"> 
+          <label for="email"> Email:</label>
+          <input class="form-control" type="email" name="email" id="email" placeholder="tinyapp@lighthouse.com" style="width: 300px; margin-bottom: 1em">
         </div>
-        <div>
-          <label for="password"> Password </label>
-          <input type="password" name="password" id="password">
-          <button type="submit"> Login </button>
+        <div class="form-group mb-2">
+          <label for="password"> Password:</label>
+          <input class="form-control" type="password" name="password" id="password" placeholder="VeRy StRoNg PaSsWoRd" style="width: 300px; margin-bottom: 1em">
+          <button type="submit" class="btn-info"> Login </button>
         </div>
       </form>
     </main>
