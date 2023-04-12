@@ -45,7 +45,11 @@ app.set("view engine", "ejs");
 //=====================GET============================
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (!req.session.userID) {
+    res.redirect("/login");
+  } else {
+    res.redirect("/urls");
+  }
 });
 
 app.get("/urls.json", (req, res) => {
@@ -106,7 +110,7 @@ app.get("/urls/:id", (req, res) => {
 //redirects to url - sends error if user tries to access an id that DNE
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
-  const longURL = urlDatabase[id].longURL;
+  const longURL = urlDatabase[req.params.longURL];
   const selectedUrl = urlDatabase[id]
 
   if (!selectedUrl) {
@@ -163,7 +167,7 @@ app.post("/urls", (req, res) => {
 
 //editing urls - only if it belongs to user
 app.post("/urls/:id/edit", (req, res) => {
-  const { id } = req.params;
+  const id = req.params.id;
 
   if (req.session.userID !== urlDatabase[id].userID) {
     return res.status(400).send("You are not authorized to edit :(");
@@ -234,7 +238,7 @@ app.post('/register', (req, res) => {
 
   users[ID] = {
     id: ID,
-    email: req.body.email,
+    email,
     password: hashedPassword,
   };
 
